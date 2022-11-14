@@ -1,43 +1,91 @@
-import React, { useState } from 'react';
+import React, { useReducer, useState, useEffect } from 'react';
 
 import Card from '../UI/Card/Card';
 import classes from './Login.module.css';
 import Button from '../UI/Button/Button';
 
+//ma byt mimo Login(), lebo nema byt ovplyvnovana nicim co je v Login()...teda kde je vlastny useReducer()
+const emailReducer = (state, action) => {
+  if (action.type === 'USER_INPUT') {
+    return { value: action.val, isValid: action.val.includes('@') };
+  }
+  if (action.type === 'INPUT_BLUR') {
+    return { value: state.value, isValid: state.value.includes('@') };
+  }
+  return { value: '', isValid: false };
+};
+
+const passwordReducer = (state, action) => {
+  if (action.type === 'USER_INPUT') {
+    return { value: action.val, isValid: action.val.trim().length > 6 };
+  }
+  if (action.type === 'INPUT_BLUR') {
+    return { value: state.value, isValid: state.value.trim().length > 6 };
+  }
+  return { value: '', isValid: false };
+};
+
 const Login = (props) => {
-  const [enteredEmail, setEnteredEmail] = useState('');
-  const [emailIsValid, setEmailIsValid] = useState();
-  const [enteredPassword, setEnteredPassword] = useState('');
-  const [passwordIsValid, setPasswordIsValid] = useState();
   const [formIsValid, setFormIsValid] = useState(false);
 
-  const emailChangeHandler = (event) => {
-    setEnteredEmail(event.target.value);
+  const [emailState, dispachEmail] = useReducer(emailReducer, {
+    value: '',
+    isValid: null,
+  });
 
-    setFormIsValid(
-      event.target.value.includes('@') && enteredPassword.trim().length > 6
-    );
+  const [passwordState, dispachPassword] = useReducer(passwordReducer, {
+    value: '',
+    isValid: null,
+  });
+
+  //object destructuring....cize emailSate vyebrieme isValid a priradime emailIsValid...to iste pre passwordState
+  //ide o to, ze zase pricasto sa vola useEffect, ak je dependencies=[emailState, passwordState]
+  //pretoze to sa meni casto, resp. vzdy ked sa zmeni hodnota email/password
+  //ale nas zaujima iba ci su hodnoty validne....preto iba toto pouzijem do dependecies a nie cely State
+  //...druha moznost: nemusime robit destructuring objektu, ale mozeme pouzit v dependencies len
+  //propertie, cize emailState.isValid a password.isValid...to sa mi paci asi viac
+  const { isValid: emailIsValid } = emailState;
+  const { isValid: passwordIsValid } = passwordState;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      console.log('Checkin validation');
+      //setFormIsValid(emailState.isValid && passwordState.isValid);
+      setFormIsValid(emailIsValid && passwordIsValid);
+    }, 500);
+
+    return () => {
+      console.log('CLEANUP!');
+      clearTimeout(timer);
+    };
+  }, [emailIsValid, passwordIsValid]);
+  //}, [emailState, passwordState]);
+
+  const emailChangeHandler = (event) => {
+    dispachEmail({ type: 'USER_INPUT', val: event.target.value });
+
+    //potrebuje aktualny posledny stav passwordState...preto lepsie useEffect
+    //setFormIsValid(event.target.value.includes('@') && passwordState.isValid);
   };
 
   const passwordChangeHandler = (event) => {
-    setEnteredPassword(event.target.value);
+    dispachPassword({ type: 'USER_INPUT', val: event.target.value });
 
-    setFormIsValid(
-      event.target.value.trim().length > 6 && enteredEmail.includes('@')
-    );
+    //potrebuje aktualny posledny stav emailState...preto lepsie useEffect
+    //setFormIsValid(emailState.isValid && event.target.value.trim().length > 6);
   };
 
   const validateEmailHandler = () => {
-    setEmailIsValid(enteredEmail.includes('@'));
+    dispachEmail({ type: 'INPUT_BLUR' });
   };
 
   const validatePasswordHandler = () => {
-    setPasswordIsValid(enteredPassword.trim().length > 6);
+    dispachPassword({ type: 'INPUT_BLUR' });
   };
 
   const submitHandler = (event) => {
     event.preventDefault();
-    props.onLogin(enteredEmail, enteredPassword);
+    props.onLogin(emailState.value, passwordState.value);
   };
 
   return (
@@ -45,34 +93,34 @@ const Login = (props) => {
       <form onSubmit={submitHandler}>
         <div
           className={`${classes.control} ${
-            emailIsValid === false ? classes.invalid : ''
+            emailState.isValid === false ? classes.invalid : ''
           }`}
         >
-          <label htmlFor="email">E-Mail</label>
+          <label htmlFor='email'>E-Mail</label>
           <input
-            type="email"
-            id="email"
-            value={enteredEmail}
+            type='email'
+            id='email'
+            value={emailState.value}
             onChange={emailChangeHandler}
             onBlur={validateEmailHandler}
           />
         </div>
         <div
           className={`${classes.control} ${
-            passwordIsValid === false ? classes.invalid : ''
+            passwordState.isValid === false ? classes.invalid : ''
           }`}
         >
-          <label htmlFor="password">Password</label>
+          <label htmlFor='password'>Password</label>
           <input
-            type="password"
-            id="password"
-            value={enteredPassword}
+            type='password'
+            id='password'
+            value={passwordState.value}
             onChange={passwordChangeHandler}
             onBlur={validatePasswordHandler}
           />
         </div>
         <div className={classes.actions}>
-          <Button type="submit" className={classes.btn} disabled={!formIsValid}>
+          <Button type='submit' className={classes.btn} disabled={!formIsValid}>
             Login
           </Button>
         </div>
