@@ -1,8 +1,9 @@
-import React, { useReducer, useState, useEffect } from 'react';
+import React, { useReducer, useState, useEffect, useContext } from 'react';
 
 import Card from '../UI/Card/Card';
 import classes from './Login.module.css';
 import Button from '../UI/Button/Button';
+import AuthContext from '../../store/auth-context';
 
 //ma byt mimo Login(), lebo nema byt ovplyvnovana nicim co je v Login()...teda kde je vlastny useReducer()
 const emailReducer = (state, action) => {
@@ -15,6 +16,7 @@ const emailReducer = (state, action) => {
   return { value: '', isValid: false };
 };
 
+//musi byt mimo Login()
 const passwordReducer = (state, action) => {
   if (action.type === 'USER_INPUT') {
     return { value: action.val, isValid: action.val.trim().length > 6 };
@@ -26,6 +28,7 @@ const passwordReducer = (state, action) => {
 };
 
 const Login = (props) => {
+  const ctx = useContext(AuthContext);
   const [formIsValid, setFormIsValid] = useState(false);
 
   const [emailState, dispachEmail] = useReducer(emailReducer, {
@@ -49,7 +52,7 @@ const Login = (props) => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      console.log('Checkin validation');
+      console.count('Checkin validation');
       //setFormIsValid(emailState.isValid && passwordState.isValid);
       setFormIsValid(emailIsValid && passwordIsValid);
     }, 500);
@@ -85,7 +88,7 @@ const Login = (props) => {
 
   const submitHandler = (event) => {
     event.preventDefault();
-    props.onLogin(emailState.value, passwordState.value);
+    ctx.onLogin(emailState.value, passwordState.value);
   };
 
   return (
