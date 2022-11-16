@@ -1,10 +1,4 @@
-import React, {
-  useReducer,
-  useState,
-  useEffect,
-  useContext,
-  useRef,
-} from 'react';
+import React, { useReducer, useState, useEffect, useContext } from 'react';
 
 import Card from '../UI/Card/Card';
 import classes from './Login.module.css';
@@ -47,10 +41,6 @@ const Login = (props) => {
     value: '',
     isValid: null,
   });
-
-  //ref
-  const emailInputRef = useRef();
-  const passwordInputRef = useRef();
 
   //object destructuring....cize emailSate vyebrieme isValid a priradime emailIsValid...to iste pre passwordState
   //ide o to, ze zase pricasto sa vola useEffect, ak je dependencies=[emailState, passwordState]
@@ -99,24 +89,13 @@ const Login = (props) => {
 
   const submitHandler = (event) => {
     event.preventDefault();
-    if (formIsValid) {
-      ctx.onLogin(emailState.value, passwordState.value);
-    } else if (!emailIsValid) {
-      //email invalid...cez activate() to zvonka nefunguje, treba volat focus()
-      //emailInputRef.current.activate();
-      emailInputRef.current.focus();
-    } else {
-      //password invalid...detto, treba volat focus()
-      //passwordInputRef.current.activate();
-      passwordInputRef.current.focus();
-    }
+    ctx.onLogin(emailState.value, passwordState.value);
   };
 
   return (
     <Card className={classes.login}>
       <form onSubmit={submitHandler}>
         <Input
-          ref={emailInputRef}
           id='email'
           label='Email'
           type='email'
@@ -126,7 +105,6 @@ const Login = (props) => {
           onBlur={validateEmailHandler}
         />
         <Input
-          ref={passwordInputRef}
           id='password'
           label='Password'
           type='password'
@@ -136,7 +114,7 @@ const Login = (props) => {
           onBlur={validatePasswordHandler}
         />
         <div className={classes.actions}>
-          <Button type='submit' className={classes.btn}>
+          <Button type='submit' className={classes.btn} disabled={!formIsValid}>
             Login
           </Button>
         </div>
